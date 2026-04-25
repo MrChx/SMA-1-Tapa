@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Admin Account ───────────────────────────────────────────────
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  sessions     Session[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── Organisasi (OSIS / Rohis / Pramuka) ─────────────────────────
+model OrganizationMember {
+  id           String   @id @default(cuid())
+  organization String   // "OSIS" | "Rohis" | "Pramuka"
+  name         String
+  role         String
+  photoUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Direktori (Guru / Staf / Siswa) ─────────────────────────────
+model DirectoryMember {
+  id        String   @id @default(cuid())
+  category  String   // "Guru" | "Staf" | "Siswa"
+  name      String
+  role      String
+  photoUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Galeri Kegiatan ─────────────────────────────────────────────
+model GalleryItem {
+  id           String   @id @default(cuid())
+  category     String
+  title        String
+  summary      String
+  content      String   @db.Text
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Pesan Kontak Masuk ──────────────────────────────────────────
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── FAQ ─────────────────────────────────────────────────────────
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Site Configuration (Key-Value Store) ────────────────────────
+model SiteConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+}
+
+// ─── Absensi: Siswa ──────────────────────────────────────────────
+model Student {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  kelas      String
+  embeddings Json     // Array of 5 face descriptor arrays (128-dim each)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  attendances AttendanceRecord[]
+}
+
+// ─── Absensi: Catatan Kehadiran ──────────────────────────────────
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date      String   // "2026-04-22"
+  time      String   // "07:30:05"
+  status    String   @default("Hadir")
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, date])
+}

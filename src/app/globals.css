@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-plus-jakarta), sans-serif;
+  
+  /* SMA 1 Tapa Custom Blue Palette (Navbar matched) */
+  --color-blue-50: #f2f8fc;
+  --color-blue-100: #e1f0fa;
+  --color-blue-200: #badcf5;
+  --color-blue-300: #81bdf0;
+  --color-blue-400: #4c99eb;
+  --color-blue-500: #2b7ad8;
+  --color-blue-600: #1c62bf;
+  --color-blue-700: #175bb8;   /* MAIN SMA BLUE */
+  --color-blue-800: #164a96;
+  --color-blue-900: #0f3675;   /* TEXT DARK BLUE */
+  --color-blue-950: #071f4a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 1,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Premium gradient shine animation for title */
+.text-shine-premium {
+  background: linear-gradient(
+    to right,
+    var(--color-blue-700) 20%,
+    #60a5fa 40%,
+    #93c5fd 50%,
+    #60a5fa 60%,
+    var(--color-blue-700) 80%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shine 5s linear infinite;
+  display: inline-block;
+  padding-bottom: 0.1em; /* Prevent clipping */
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes gradient-shine {
+  from { background-position: 200% center; }
+  to { background-position: 0% center; }
+}
+
+/* Toast notification animations */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes slideOut {
+  from { opacity: 1; transform: translateX(0) scale(1); max-height: 120px; }
+  to { opacity: 0; transform: translateX(100%) scale(0.95); max-height: 0; margin: 0; padding: 0; }
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
