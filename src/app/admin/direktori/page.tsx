@@ -5,10 +5,12 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmModal";
 
 type Member = { id: string; category: string; name: string; role: string; photoUrl: string | null };
+type KelasItem = { id: string; name: string };
 
 export default function AdminDirektori() {
   const [activeTab, setActiveTab] = useState<"Guru" | "Staf" | "Siswa">("Guru");
   const [members, setMembers] = useState<Member[]>([]);
+  const [kelasList, setKelasList] = useState<KelasItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const confirm = useConfirm();
@@ -27,12 +29,31 @@ export default function AdminDirektori() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchMembers(); }, [fetchMembers]);
+  const fetchKelasList = useCallback(async () => {
+    const res = await fetch("/api/absensi/kelas");
+    setKelasList(await res.json());
+  }, []);
+
+  useEffect(() => { fetchMembers(); fetchKelasList(); }, [fetchMembers, fetchKelasList]);
 
   const filtered = members.filter((m) => m.category === activeTab);
 
-  const handleOpenAdd = () => { setModalMode("create"); setFormId(null); setFormName(""); setFormRole(""); setFormPhoto(null); setIsModalOpen(true); };
-  const handleOpenEdit = (m: Member) => { setModalMode("edit"); setFormId(m.id); setFormName(m.name); setFormRole(m.role); setFormPhoto(m.photoUrl); setIsModalOpen(true); };
+  const handleOpenAdd = () => {
+    setModalMode("create");
+    setFormId(null);
+    setFormName("");
+    setFormRole(activeTab === "Siswa" && kelasList.length > 0 ? kelasList[0].name : "");
+    setFormPhoto(null);
+    setIsModalOpen(true);
+  };
+  const handleOpenEdit = (m: Member) => {
+    setModalMode("edit");
+    setFormId(m.id);
+    setFormName(m.name);
+    setFormRole(m.role);
+    setFormPhoto(m.photoUrl);
+    setIsModalOpen(true);
+  };
   const handleDelete = async (id: string) => {
     const isConfirmed = await confirm({
       title: "Hapus Data?",
@@ -104,7 +125,7 @@ export default function AdminDirektori() {
             <div className="py-16 text-center text-blue-400"><span className="material-symbols-outlined animate-spin text-3xl">progress_activity</span><p className="mt-2 text-sm">Memuat data...</p></div>
           ) : (
             <table className="w-full text-left border-collapse">
-              <thead><tr className="bg-white border-b border-blue-100 text-blue-400 uppercase tracking-widest text-[10px] font-bold"><th className="px-6 py-4">Profil</th><th className="px-6 py-4">Nama Lengkap</th><th className="px-6 py-4">Jabatan</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead>
+              <thead><tr className="bg-white border-b border-blue-100 text-blue-400 uppercase tracking-widest text-[10px] font-bold"><th className="px-6 py-4">Profil</th><th className="px-6 py-4">Nama Lengkap</th><th className="px-6 py-4">{activeTab === "Siswa" ? "Kelas" : "Jabatan"}</th><th className="px-6 py-4 text-right">Aksi</th></tr></thead>
               <tbody className="divide-y divide-blue-50">
                 {filtered.length === 0 ? (
                   <tr><td colSpan={4} className="py-16 text-center text-blue-400"><div className="flex flex-col items-center gap-3"><span className="material-symbols-outlined text-5xl opacity-40">box</span><p className="font-medium text-sm">Belum ada data untuk <b>{activeTab}</b>.</p><button onClick={handleOpenAdd} className="text-blue-600 font-bold text-sm hover:underline mt-2">Tambahkan Sekarang</button></div></td></tr>
@@ -144,10 +165,34 @@ export default function AdminDirektori() {
                 <label className="text-xs font-bold uppercase tracking-wider text-blue-700 ml-4">Nama Lengkap & Gelar</label>
                 <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full px-6 py-4 rounded-full bg-blue-50/50 border border-blue-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-blue-950 transition-all outline-none" placeholder="Contoh: Dra. Sri Mulyani" required />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-blue-700 ml-4">Jabatan Terkini</label>
-                <input type="text" value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full px-6 py-4 rounded-full bg-blue-50/50 border border-blue-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-blue-950 transition-all outline-none" placeholder="Contoh: Guru Bahasa Indonesia" required />
-              </div>
+
+              {/* Conditional: Dropdown for Siswa, Text input for Guru/Staf */}
+              {activeTab === "Siswa" ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-blue-700 ml-4">Kelas</label>
+                  <div className="relative">
+                    <select
+                      value={formRole}
+                      onChange={(e) => setFormRole(e.target.value)}
+                      className="w-full px-6 py-4 rounded-full bg-blue-50/50 border border-blue-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-blue-950 transition-all outline-none appearance-none cursor-pointer"
+                      required
+                    >
+                      <option value="">Pilih Kelas...</option>
+                      {kelasList.map((k) => <option key={k.id} value={k.name}>{k.name}</option>)}
+                    </select>
+                    <span className="material-symbols-outlined text-blue-400 absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                  </div>
+                  {kelasList.length === 0 && (
+                    <p className="text-xs text-amber-600 ml-4">Belum ada kelas. Tambahkan kelas di menu Absensi → Kelas terlebih dahulu.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-blue-700 ml-4">Jabatan Terkini</label>
+                  <input type="text" value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full px-6 py-4 rounded-full bg-blue-50/50 border border-blue-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-blue-950 transition-all outline-none" placeholder="Contoh: Guru Bahasa Indonesia" required />
+                </div>
+              )}
+
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-blue-50">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-full font-bold text-blue-600 hover:bg-blue-50 transition-colors">Batal</button>
                 <button type="submit" disabled={saving} className="bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg shadow-blue-700/25">{saving ? "Menyimpan..." : "Simpan Data"}</button>

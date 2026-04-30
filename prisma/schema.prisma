@@ -91,6 +91,13 @@ model SiteConfig {
   value String @db.Text
 }
 
+// ─── Absensi: Kelas ──────────────────────────────────────────────
+model Kelas {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
 // ─── Absensi: Siswa ──────────────────────────────────────────────
 model Student {
   id         String   @id @default(cuid())

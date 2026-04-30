@@ -57,12 +57,6 @@ export default async function Galeri() {
                   </span>
                   <h3 className="text-xl font-bold leading-tight text-blue-950">{item.title}</h3>
                   <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-blue-800">{item.summary}</p>
-                  <Link
-                    href={`/galeri/${item.id}`}
-                    className="mt-auto block w-full rounded-lg border border-blue-100 bg-blue-50 py-2.5 text-center text-sm font-bold text-blue-700 shadow-sm transition-colors hover:bg-blue-100"
-                  >
-                    Baca Selengkapnya &rarr;
-                  </Link>
                 </div>
               </article>
             ))}

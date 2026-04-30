@@ -20,6 +20,7 @@ export default function AbsensiPage() {
 
   const [regName, setRegName] = useState("");
   const [regKelas, setRegKelas] = useState("");
+  const [kelasList, setKelasList] = useState<{ id: string; name: string }[]>([]);
   const [regStep, setRegStep] = useState(-1);
   const [regStatus, setRegStatus] = useState("");
   const [regError, setRegError] = useState("");
@@ -56,6 +57,7 @@ export default function AbsensiPage() {
       }
     };
     load();
+    fetch("/api/absensi/kelas").then(r => r.json()).then(setKelasList).catch(() => {});
   }, []);
 
   const startCamera = useCallback(async () => {
@@ -388,7 +390,14 @@ export default function AbsensiPage() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-blue-600 ml-1">Kelas</label>
-                        <input value={regKelas} onChange={(e) => setRegKelas(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-blue-50 border border-blue-100 focus:border-blue-300 focus:ring-2 focus:ring-blue-200 outline-none text-blue-950 font-medium" placeholder="Contoh: XII IPA 1" />
+                        <div className="relative">
+                          <select value={regKelas} onChange={(e) => setRegKelas(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-blue-50 border border-blue-100 focus:border-blue-300 focus:ring-2 focus:ring-blue-200 outline-none text-blue-950 font-medium appearance-none cursor-pointer">
+                            <option value="">Pilih kelas...</option>
+                            {kelasList.map((k) => <option key={k.id} value={k.name}>{k.name}</option>)}
+                          </select>
+                          <span className="material-symbols-outlined text-blue-400 absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                        </div>
+                        {kelasList.length === 0 && <p className="text-xs text-amber-600 ml-1">Belum ada kelas tersedia. Hubungi admin untuk menambahkan kelas.</p>}
                       </div>
                     </div>
                     {regError && <p className="text-red-600 text-sm font-bold bg-red-50 px-4 py-2 rounded-xl">{regError}</p>}
