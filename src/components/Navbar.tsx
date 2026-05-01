@@ -27,6 +27,8 @@ export default function Navbar() {
         { name: "OSIS", href: "/organisasi/osis" },
         { name: "Rohis", href: "/organisasi/rohis" },
         { name: "Pramuka", href: "/organisasi/pramuka" },
+        { name: "PMR", href: "/organisasi/pmr" },
+        { name: "PIK-R", href: "/organisasi/pikr" },
       ],
     },
     {

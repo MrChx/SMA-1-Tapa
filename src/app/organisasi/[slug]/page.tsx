@@ -9,6 +9,8 @@ const ORG_MAP: Record<string, { name: string; full: string; logoUrl: string; dbK
   osis: { name: "OSIS", full: "Organisasi Siswa Intra Sekolah", logoUrl: "/osis.png", dbKey: "OSIS" },
   rohis: { name: "Rohis", full: "Rohani Islam", logoUrl: "/rohis.jpeg", dbKey: "Rohis" },
   pramuka: { name: "Pramuka", full: "Gerakan Pramuka", logoUrl: "/pramuka.png", dbKey: "Pramuka" },
+  pmr: { name: "PMR", full: "Palang Merah Remaja", logoUrl: "/PMR.png", dbKey: "PMR" },
+  pikr: { name: "PIK-R", full: "Pusat Informasi & Konseling Remaja", logoUrl: "/PIKR.jpg", dbKey: "PIK-R" },
 };
 
 export default async function OrganisasiDetail({ params }: { params: Promise<{ slug: string }> }) {

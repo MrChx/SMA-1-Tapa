@@ -9,6 +9,8 @@ export default async function Organisasi() {
     { slug: "osis", name: "OSIS", full: "Organisasi Siswa Intra Sekolah", logoUrl: "/osis.png", icon: "groups" },
     { slug: "rohis", name: "Rohis", full: "Rohani Islam", logoUrl: "/rohis.jpeg", icon: "mosque" },
     { slug: "pramuka", name: "Pramuka", full: "Gerakan Pramuka", logoUrl: "/pramuka.png", icon: "forest" },
+    { slug: "pmr", name: "PMR", full: "Palang Merah Remaja", logoUrl: "/PMR.png", icon: "medical_services" },
+    { slug: "pikr", name: "PIK-R", full: "Pusat Informasi & Konseling Remaja", logoUrl: "/PIKR.jpg", icon: "psychology" },
   ];
 
   return (

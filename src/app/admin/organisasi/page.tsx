@@ -13,7 +13,7 @@ type Member = {
 };
 
 export default function AdminOrganisasi() {
-  const [activeTab, setActiveTab] = useState<"OSIS" | "Rohis" | "Pramuka">("OSIS");
+  const [activeTab, setActiveTab] = useState<"OSIS" | "Rohis" | "Pramuka" | "PMR" | "PIK-R">("OSIS");
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -114,7 +114,7 @@ export default function AdminOrganisasi() {
       <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-blue-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h1 className="text-2xl font-extrabold text-blue-950 tracking-tight">Manajemen Organisasi</h1>
-          <p className="text-blue-700 text-sm mt-1">Kelola data keanggotaan OSIS, Rohis, dan Pramuka.</p>
+          <p className="text-blue-700 text-sm mt-1">Kelola data keanggotaan OSIS, Rohis, Pramuka, PMR, dan PIK-R.</p>
         </div>
         <button onClick={handleOpenAdd} className="bg-blue-700 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-800 transition-all flex items-center gap-2 shadow-lg shadow-blue-700/20 active:scale-95">
           <span className="material-symbols-outlined text-xl">add</span> Tambah Anggota
@@ -123,7 +123,7 @@ export default function AdminOrganisasi() {
 
       <div className="bg-white border border-blue-100 rounded-[2rem] overflow-hidden shadow-sm flex flex-col h-full min-h-[500px]">
         <div className="flex border-b border-blue-100 bg-blue-50/50">
-          {(["OSIS", "Rohis", "Pramuka"] as const).map((tab) => (
+          {(["OSIS", "Rohis", "Pramuka", "PMR", "PIK-R"] as const).map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-center font-bold text-sm md:text-base border-b-2 transition-all ${activeTab === tab ? "border-blue-700 text-blue-700 bg-white" : "border-transparent text-blue-500 hover:text-blue-700 hover:bg-blue-50"}`}>
               {tab}
             </button>

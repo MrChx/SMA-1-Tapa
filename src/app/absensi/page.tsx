@@ -32,6 +32,7 @@ export default function AbsensiPage() {
   const [absMessage, setAbsMessage] = useState("");
   const [absStudentName, setAbsStudentName] = useState("");
   const [absStudentKelas, setAbsStudentKelas] = useState("");
+  const [absIsLate, setAbsIsLate] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<"loading" | "ok" | "error">("loading");
   const gpsCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -243,6 +244,7 @@ export default function AbsensiPage() {
         setAbsStudentName(data.name);
         setAbsStudentKelas(data.kelas);
         setAbsMessage(data.message);
+        setAbsIsLate(!!data.isLate);
         setAbsStatus("success");
       } catch (e: unknown) {
         setAbsStatus("error");
@@ -349,15 +351,21 @@ export default function AbsensiPage() {
                 )}
 
                 {absStatus === "success" && (
-                  <div className="bg-white rounded-[2rem] border-2 border-green-200 p-8 md:p-12 text-center space-y-5 shadow-sm animate-[fadeIn_0.3s_ease-out]">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                      <span className="material-symbols-outlined text-5xl text-green-600">check_circle</span>
+                  <div className={`bg-white rounded-[2rem] border-2 p-8 md:p-12 text-center space-y-5 shadow-sm animate-[fadeIn_0.3s_ease-out] ${absIsLate ? "border-amber-300" : "border-green-200"}`}>
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${absIsLate ? "bg-amber-100" : "bg-green-100"}`}>
+                      <span className={`material-symbols-outlined text-5xl ${absIsLate ? "text-amber-500" : "text-green-600"}`}>{absIsLate ? "schedule" : "check_circle"}</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-green-800">Absensi Berhasil!</h2>
-                    <p className="text-green-600 text-4xl font-black">{absStudentName}</p>
-                    <p className="text-green-700 text-sm font-bold">Kelas {absStudentKelas}</p>
-                    <p className="text-green-600/80 text-sm">{absMessage}</p>
-                    <button onClick={resetAttendance} className="bg-green-600 text-white px-8 py-3 rounded-full font-bold hover:bg-green-700 active:scale-95 transition-all">Selesai</button>
+                    <h2 className={`text-2xl font-bold ${absIsLate ? "text-amber-700" : "text-green-800"}`}>{absIsLate ? "Anda Terlambat!" : "Absensi Berhasil!"}</h2>
+                    <p className={`text-4xl font-black ${absIsLate ? "text-amber-600" : "text-green-600"}`}>{absStudentName}</p>
+                    <p className={`text-sm font-bold ${absIsLate ? "text-amber-700" : "text-green-700"}`}>Kelas {absStudentKelas}</p>
+                    {absIsLate && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 inline-flex items-center gap-3">
+                        <span className="material-symbols-outlined text-amber-500">warning</span>
+                        <span className="text-amber-700 text-sm font-bold">Absensi tercatat sebagai TERLAMBAT</span>
+                      </div>
+                    )}
+                    <p className={`text-sm ${absIsLate ? "text-amber-600/80" : "text-green-600/80"}`}>{absMessage}</p>
+                    <button onClick={resetAttendance} className={`text-white px-8 py-3 rounded-full font-bold active:scale-95 transition-all ${absIsLate ? "bg-amber-500 hover:bg-amber-600" : "bg-green-600 hover:bg-green-700"}`}>Selesai</button>
                   </div>
                 )}
 

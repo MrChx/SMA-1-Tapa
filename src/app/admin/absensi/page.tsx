@@ -200,14 +200,20 @@ export default function AdminAbsensi() {
                         <td className="py-3 px-4 font-bold text-blue-950">{r.student.name}</td>
                         <td className="py-3 px-4 text-blue-700">{r.student.kelas}</td>
                         <td className="py-3 px-4 text-blue-600">{r.time}</td>
-                        <td className="py-3 px-4"><span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">{r.status}</span></td>
+                        <td className="py-3 px-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.status === "Terlambat" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}>{r.status}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
-            <div className="mt-4 text-right text-xs text-blue-400 font-bold">Total: {records.length} siswa hadir</div>
+            <div className="mt-4 flex items-center justify-end gap-4 text-xs font-bold">
+              <span className="text-green-600">Hadir: {records.filter(r => r.status === "Hadir").length}</span>
+              <span className="text-amber-600">Terlambat: {records.filter(r => r.status === "Terlambat").length}</span>
+              <span className="text-blue-400">Total: {records.length}</span>
+            </div>
           </div>
         </section>
       )}

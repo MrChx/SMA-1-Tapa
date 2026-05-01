@@ -80,13 +80,34 @@ export async function POST(req: NextRequest) {
     }
 
     // Record attendance (prevent duplicate via unique constraint)
+    // WITA = UTC+8
     const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
-    const timeStr = now.toTimeString().split(" ")[0];
+    const witaOffset = 8 * 60; // WITA is UTC+8
+    const witaTime = new Date(now.getTime() + (witaOffset + now.getTimezoneOffset()) * 60000);
+    const dateStr = witaTime.toISOString().split("T")[0];
+    const hours = witaTime.getHours();
+    const minutes = witaTime.getMinutes();
+    const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(witaTime.getSeconds()).padStart(2, "0")}`;
+
+    // Late if after 07:30 WITA, blocked if outside 06:00-15:00
+    const totalMinutes = hours * 60 + minutes;
+    const OPEN_TIME = 6 * 60;       // 06:00
+    const ONTIME_END = 7 * 60 + 30; // 07:30
+    const CLOSE_TIME = 15 * 60;     // 15:00
+
+    if (totalMinutes < OPEN_TIME || totalMinutes >= CLOSE_TIME) {
+      return NextResponse.json({
+        error: "Jam sekolah sudah selesai. Absensi hanya tersedia pukul 06:00 - 15:00 WITA.",
+        closed: true,
+      }, { status: 403 });
+    }
+
+    const isLate = totalMinutes > ONTIME_END;
+    const status = isLate ? "Terlambat" : "Hadir";
 
     try {
       await prisma.attendanceRecord.create({
-        data: { studentId: bestMatch.id, date: dateStr, time: timeStr, status: "Hadir" },
+        data: { studentId: bestMatch.id, date: dateStr, time: timeStr, status },
       });
     } catch (e: any) {
       if (e?.code === "P2002") {
@@ -106,7 +127,11 @@ export async function POST(req: NextRequest) {
       name: bestMatch.name,
       kelas: bestMatch.kelas,
       time: timeStr,
-      message: `Absensi berhasil! Selamat datang, ${bestMatch.name}.`,
+      status,
+      isLate,
+      message: isLate
+        ? `Anda absen di waktu yang terlambat (${timeStr} WITA). Batas absen tepat waktu: 07:30 WITA.`
+        : `Absensi berhasil! Selamat datang, ${bestMatch.name}.`,
     });
   } catch (error) {
     console.error("Attend error:", error);
