@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmModal";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Student = { id: string; name: string; kelas: string; createdAt: string };
 type Record = { id: string; date: string; time: string; status: string; student: { name: string; kelas: string } };
@@ -23,6 +25,11 @@ export default function AdminAbsensi() {
   const [attLat, setAttLat] = useState("");
   const [attLng, setAttLng] = useState("");
   const [attRadius, setAttRadius] = useState("100");
+
+  // Export PDF
+  const [exportMode, setExportMode] = useState<"day" | "month">("day");
+  const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [exporting, setExporting] = useState(false);
 
   // Kelas form
   const [newKelasName, setNewKelasName] = useState("");
@@ -124,6 +131,88 @@ export default function AdminAbsensi() {
     }
   };
 
+  // ─── PDF Export ───
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (exportMode === "day") {
+        params.set("date", dateFilter);
+      } else {
+        params.set("month", exportMonth);
+      }
+      if (kelasFilter) params.set("kelas", kelasFilter);
+      const res = await fetch(`/api/absensi/records?${params}`);
+      const data: Record[] = await res.json();
+
+      if (data.length === 0) {
+        showToast("error", "Tidak Ada Data", "Tidak ada data absensi untuk diekspor.");
+        setExporting(false);
+        return;
+      }
+
+      const doc = new jsPDF();
+      const periodLabel = exportMode === "day" ? dateFilter : exportMonth;
+      const kelasLabel = kelasFilter || "Semua Kelas";
+      const title = `Laporan Absensi - ${kelasLabel}`;
+      const subtitle = exportMode === "day" ? `Tanggal: ${dateFilter}` : `Bulan: ${exportMonth}`;
+
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("SMA Negeri 1 Tapa", 105, 18, { align: "center" });
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text(title, 105, 26, { align: "center" });
+      doc.setFontSize(9);
+      doc.text(subtitle, 105, 32, { align: "center" });
+
+      const rows = data.map((r, i) => [
+        i + 1,
+        r.student.name,
+        r.student.kelas,
+        exportMode === "month" ? r.date : "",
+        r.time,
+        r.status,
+      ].filter((_, ci) => exportMode === "month" || ci !== 3));
+
+      const columns = exportMode === "month"
+        ? ["No", "Nama", "Kelas", "Tanggal", "Waktu", "Status"]
+        : ["No", "Nama", "Kelas", "Waktu", "Status"];
+
+      autoTable(doc, {
+        startY: 38,
+        head: [columns],
+        body: rows,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [23, 91, 184], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 248, 255] },
+        didParseCell: (d: any) => {
+          if (d.section === "body" && d.column.index === columns.length - 1) {
+            if (d.cell.raw === "Terlambat") {
+              d.cell.styles.textColor = [180, 100, 0];
+              d.cell.styles.fontStyle = "bold";
+            } else if (d.cell.raw === "Hadir") {
+              d.cell.styles.textColor = [0, 128, 0];
+            }
+          }
+        },
+      });
+
+      const hadir = data.filter(r => r.status === "Hadir").length;
+      const telat = data.filter(r => r.status === "Terlambat").length;
+      const finalY = (doc as any).lastAutoTable?.finalY || 50;
+      doc.setFontSize(8);
+      doc.text(`Hadir: ${hadir}  |  Terlambat: ${telat}  |  Total: ${data.length}`, 14, finalY + 8);
+      doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, finalY + 13);
+
+      doc.save(`Absensi_${kelasLabel.replace(/\s/g, "_")}_${periodLabel}.pdf`);
+      showToast("success", "PDF Berhasil", "File PDF berhasil diunduh.");
+    } catch {
+      showToast("error", "Gagal", "Gagal mengekspor PDF.");
+    }
+    setExporting(false);
+  };
+
   const parseGmapsLink = (link: string) => {
     const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (match) {
@@ -209,10 +298,34 @@ export default function AdminAbsensi() {
                 </table>
               </div>
             )}
-            <div className="mt-4 flex items-center justify-end gap-4 text-xs font-bold">
-              <span className="text-green-600">Hadir: {records.filter(r => r.status === "Hadir").length}</span>
-              <span className="text-amber-600">Terlambat: {records.filter(r => r.status === "Terlambat").length}</span>
-              <span className="text-blue-400">Total: {records.length}</span>
+            <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4 text-xs font-bold">
+                <span className="text-green-600">Hadir: {records.filter(r => r.status === "Hadir").length}</span>
+                <span className="text-amber-600">Terlambat: {records.filter(r => r.status === "Terlambat").length}</span>
+                <span className="text-blue-400">Total: {records.length}</span>
+              </div>
+            </div>
+
+            {/* Export PDF Panel */}
+            <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-2 text-blue-700">
+                <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Ekspor Laporan PDF</span>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex bg-white rounded-xl border border-blue-200 p-1">
+                  <button onClick={() => setExportMode("day")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${exportMode === "day" ? "bg-blue-700 text-white shadow" : "text-blue-700 hover:bg-blue-100"}`}>Per Hari</button>
+                  <button onClick={() => setExportMode("month")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${exportMode === "month" ? "bg-blue-700 text-white shadow" : "text-blue-700 hover:bg-blue-100"}`}>Per Bulan</button>
+                </div>
+                {exportMode === "month" && (
+                  <input type="month" value={exportMonth} onChange={(e) => setExportMonth(e.target.value)} className="px-4 py-2 rounded-xl border border-blue-200 text-sm text-blue-900 outline-none focus:ring-2 focus:ring-blue-300 bg-white" />
+                )}
+                <button onClick={handleExportPDF} disabled={exporting} className="bg-red-600 disabled:bg-red-300 text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2 shadow-sm">
+                  <span className="material-symbols-outlined text-[16px]">{exporting ? "progress_activity" : "download"}</span>
+                  {exporting ? "Mengekspor..." : "Download PDF"}
+                </button>
+              </div>
+              <p className="text-[10px] text-blue-500">PDF akan diekspor sesuai filter kelas yang dipilih ({kelasFilter || "Semua Kelas"}) dan periode ({exportMode === "day" ? dateFilter : exportMonth}).</p>
             </div>
           </div>
         </section>

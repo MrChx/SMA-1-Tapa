@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email atau kata sandi salah." }, { status: 401 });
     }
 
-    await createSession(admin.id);
+    const token = await createSession(admin.id);
 
-    return NextResponse.json({ success: true, name: admin.name });
+    return NextResponse.json({ success: true, name: admin.name, token });
   } catch {
     return NextResponse.json({ error: "Terjadi kesalahan server." }, { status: 500 });
   }

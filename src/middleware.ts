@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Only protect admin UI pages, NOT API routes
   if (pathname.startsWith("/admin")) {
     const token = req.cookies.get("session_token")?.value;
     if (!token) {

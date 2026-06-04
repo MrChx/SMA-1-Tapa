@@ -1,17 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ToastProvider } from "@/components/Toast";
 import { ConfirmProvider } from "@/components/ConfirmModal";
+import { authFetch } from "@/lib/authFetch";
 
 export default function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [adminRole, setAdminRole] = useState<string>("SUPER_ADMIN");
 
-  const menuItems = [
+  useEffect(() => {
+    authFetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated) {
+          const role = data.admin.role || "SUPER_ADMIN";
+          setAdminRole(role);
+          if (role !== "SUPER_ADMIN" && pathname !== "/admin/organisasi") {
+            router.push("/admin/organisasi");
+          }
+        }
+      });
+  }, [pathname, router]);
+
+  const allMenuItems = [
     { name: "Dashboard", href: "/admin", icon: "space_dashboard" },
     { name: "Profil & Visi Misi", href: "/admin/profil", icon: "account_balance" },
     { name: "Beranda Utama", href: "/admin/beranda", icon: "home" },
@@ -20,7 +37,12 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     { name: "Galeri", href: "/admin/galeri", icon: "gallery_thumbnail" },
     { name: "Absensi", href: "/admin/absensi", icon: "face" },
     { name: "Kontak & FAQ", href: "/admin/kontak", icon: "contact_support" },
+    { name: "Manajemen Akun", href: "/admin/akun", icon: "manage_accounts" },
   ];
+
+  const menuItems = adminRole === "SUPER_ADMIN" 
+    ? allMenuItems 
+    : allMenuItems.filter(item => item.name === "Organisasi");
 
   return (
     <ToastProvider>

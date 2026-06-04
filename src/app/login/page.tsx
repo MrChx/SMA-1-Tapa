@@ -34,6 +34,10 @@ export default function Login() {
         setIsLoading(false);
         return;
       }
+      // Save token per-tab so multiple tabs can use different accounts
+      if (data.token) {
+        sessionStorage.setItem("session_token", data.token);
+      }
       router.push("/admin");
     } catch {
       setError("Terjadi kesalahan koneksi.");

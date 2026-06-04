@@ -89,11 +89,10 @@ export async function POST(req: NextRequest) {
     const minutes = witaTime.getMinutes();
     const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(witaTime.getSeconds()).padStart(2, "0")}`;
 
-    // Late if after 07:30 WITA, blocked if outside 06:00-15:00
     const totalMinutes = hours * 60 + minutes;
-    const OPEN_TIME = 6 * 60;       // 06:00
-    const ONTIME_END = 7 * 60 + 30; // 07:30
-    const CLOSE_TIME = 15 * 60;     // 15:00
+    const OPEN_TIME = 6 * 60;
+    const ONTIME_END = 7 * 60 + 30;
+    const CLOSE_TIME = 20 * 60;
 
     if (totalMinutes < OPEN_TIME || totalMinutes >= CLOSE_TIME) {
       return NextResponse.json({

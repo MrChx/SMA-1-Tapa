@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmModal";
+import { authFetch } from "@/lib/authFetch";
 
 type Member = {
   id: string;
@@ -14,6 +15,7 @@ type Member = {
 
 export default function AdminOrganisasi() {
   const [activeTab, setActiveTab] = useState<"OSIS" | "Rohis" | "Pramuka" | "PMR" | "PIK-R">("OSIS");
+  const [adminRole, setAdminRole] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -30,7 +32,16 @@ export default function AdminOrganisasi() {
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/organisasi");
+    const resAuth = await authFetch("/api/auth/me");
+    const authData = await resAuth.json();
+    const role = authData.admin?.role || "SUPER_ADMIN";
+    setAdminRole(role);
+    
+    if (role !== "SUPER_ADMIN") {
+      setActiveTab(role as any);
+    }
+
+    const res = await authFetch("/api/organisasi");
     const data = await res.json();
     setMembers(data);
     setLoading(false);
@@ -39,6 +50,10 @@ export default function AdminOrganisasi() {
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
   const filteredMembers = members.filter((m) => m.organization === activeTab);
+  
+  const TABS = adminRole === "SUPER_ADMIN" 
+    ? ["OSIS", "Rohis", "Pramuka", "PMR", "PIK-R"] 
+    : (adminRole ? [adminRole] : ["OSIS", "Rohis", "Pramuka", "PMR", "PIK-R"]);
 
   const handleOpenAdd = () => {
     setModalMode("create");
@@ -66,7 +81,7 @@ export default function AdminOrganisasi() {
     if (!isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/organisasi/${id}`, { method: "DELETE" });
+      const res = await authFetch(`/api/organisasi/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       showToast("success", "Anggota dihapus", "Data berhasil dihapus dari organisasi.");
       fetchMembers();
@@ -80,7 +95,7 @@ export default function AdminOrganisasi() {
     const fd = new FormData();
     fd.append("file", e.target.files[0]);
     fd.append("folder", "organisasi");
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const res = await authFetch("/api/upload", { method: "POST", body: fd });
     const data = await res.json();
     if (data.url) setFormPhoto(data.url);
   };
@@ -94,9 +109,9 @@ export default function AdminOrganisasi() {
     try {
       let res;
       if (modalMode === "create") {
-        res = await fetch("/api/organisasi", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        res = await authFetch("/api/organisasi", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       } else {
-        res = await fetch(`/api/organisasi/${formId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        res = await authFetch(`/api/organisasi/${formId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       }
       if (!res.ok) throw new Error();
       showToast("success", modalMode === "create" ? "Anggota ditambahkan" : "Data diperbarui", `${formName} berhasil disimpan.`);
@@ -123,8 +138,8 @@ export default function AdminOrganisasi() {
 
       <div className="bg-white border border-blue-100 rounded-[2rem] overflow-hidden shadow-sm flex flex-col h-full min-h-[500px]">
         <div className="flex border-b border-blue-100 bg-blue-50/50">
-          {(["OSIS", "Rohis", "Pramuka", "PMR", "PIK-R"] as const).map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-center font-bold text-sm md:text-base border-b-2 transition-all ${activeTab === tab ? "border-blue-700 text-blue-700 bg-white" : "border-transparent text-blue-500 hover:text-blue-700 hover:bg-blue-50"}`}>
+          {TABS.map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab as any)} className={`flex-1 py-4 text-center font-bold text-sm md:text-base border-b-2 transition-all ${activeTab === tab ? "border-blue-700 text-blue-700 bg-white" : "border-transparent text-blue-500 hover:text-blue-700 hover:bg-blue-50"}`}>
               {tab}
             </button>
           ))}
