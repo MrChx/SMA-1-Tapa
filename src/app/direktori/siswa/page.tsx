@@ -4,28 +4,41 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-type Member = { id: string; name: string; role: string; photoUrl: string | null };
+type Student = { id: string; name: string; kelas: string; photoUrl: string | null };
 type KelasItem = { id: string; name: string };
 
 export default function DirektoriSiswa() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<Student[]>([]);
   const [kelasList, setKelasList] = useState<KelasItem[]>([]);
   const [kelasFilter, setKelasFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/direktori").then(r => r.json()),
-      fetch("/api/absensi/kelas").then(r => r.json()),
-    ]).then(([allMembers, kelas]) => {
-      setMembers(allMembers.filter((m: any) => m.category === "Siswa"));
-      setKelasList(kelas);
-      setLoading(false);
-    });
+    const fetchData = async () => {
+      try {
+        const [resStudents, resKelas] = await Promise.all([
+          fetch("/api/absensi/students"),
+          fetch("/api/absensi/kelas")
+        ]);
+        
+        const studentsData = await resStudents.json();
+        const kelasData = await resKelas.json();
+        
+        setMembers(Array.isArray(studentsData) ? studentsData : []);
+        setKelasList(Array.isArray(kelasData) ? kelasData : []);
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+        setMembers([]);
+        setKelasList([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   const filtered = kelasFilter
-    ? members.filter((m) => m.role === kelasFilter)
+    ? members.filter((m) => m.kelas === kelasFilter)
     : members;
 
   return (
@@ -80,8 +93,8 @@ export default function DirektoriSiswa() {
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden mx-auto mb-4 border-4 border-blue-50 shadow-md bg-blue-100">
                   {m.photoUrl ? <img src={m.photoUrl} alt={m.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-blue-300 text-4xl">person</span></div>}
                 </div>
-                <h3 className="font-bold text-blue-950 text-sm md:text-base group-hover:text-blue-700 transition-colors">{m.name}</h3>
-                <p className="text-xs text-blue-600 font-semibold mt-1 bg-blue-50 px-3 py-1 rounded-full inline-block border border-blue-100">{m.role}</p>
+                <h3 className="font-bold text-blue-950 uppercase text-sm md:text-base group-hover:text-blue-700 transition-colors">{m.name}</h3>
+                <p className="text-xs text-blue-600 font-semibold mt-1 bg-blue-50 px-3 py-1 rounded-full inline-block border border-blue-100">{m.kelas}</p>
               </div>
             ))}
           </div>

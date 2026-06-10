@@ -5,11 +5,13 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmModal";
 
 type Member = { id: string; category: string; name: string; role: string; photoUrl: string | null };
+type Student = { id: string; name: string; kelas: string; photoUrl: string | null };
 type KelasItem = { id: string; name: string };
 
 export default function AdminDirektori() {
   const [activeTab, setActiveTab] = useState<"Guru" | "Staf" | "Siswa">("Guru");
   const [members, setMembers] = useState<Member[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [kelasList, setKelasList] = useState<KelasItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -24,8 +26,17 @@ export default function AdminDirektori() {
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/direktori");
-    setMembers(await res.json());
+    try {
+      const resDir = await fetch("/api/direktori");
+      if (resDir.ok) setMembers(await resDir.json());
+    } catch {}
+    try {
+      const resStud = await fetch("/api/absensi/students");
+      if (resStud.ok) {
+        const data = await resStud.json();
+        setStudents(Array.isArray(data) ? data : []);
+      }
+    } catch {}
     setLoading(false);
   }, []);
 
@@ -36,13 +47,19 @@ export default function AdminDirektori() {
 
   useEffect(() => { fetchMembers(); fetchKelasList(); }, [fetchMembers, fetchKelasList]);
 
-  const filtered = members.filter((m) => m.category === activeTab);
+  const filtered = activeTab === "Siswa" 
+    ? students.map(s => ({ id: s.id, category: "Siswa", name: s.name, role: s.kelas, photoUrl: s.photoUrl } as Member))
+    : members.filter((m) => m.category === activeTab);
 
   const handleOpenAdd = () => {
+    if (activeTab === "Siswa") {
+      alert("Untuk menambahkan Siswa baru, harap gunakan form Pendaftaran di halaman Absensi agar sistem dapat merekam data wajah siswa.");
+      return;
+    }
     setModalMode("create");
     setFormId(null);
     setFormName("");
-    setFormRole(activeTab === "Siswa" && kelasList.length > 0 ? kelasList[0].name : "");
+    setFormRole("");
     setFormPhoto(null);
     setIsModalOpen(true);
   };
@@ -62,7 +79,12 @@ export default function AdminDirektori() {
     if (!isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/direktori/${id}`, { method: "DELETE" });
+      let res;
+      if (activeTab === "Siswa") {
+        res = await fetch(`/api/absensi/students/${id}`, { method: "DELETE" });
+      } else {
+        res = await fetch(`/api/direktori/${id}`, { method: "DELETE" });
+      }
       if (!res.ok) throw new Error();
       showToast("success", "Data dihapus", "Berhasil menghapus dari direktori.");
       fetchMembers();
@@ -90,7 +112,11 @@ export default function AdminDirektori() {
       if (modalMode === "create") {
         res = await fetch("/api/direktori", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       } else {
-        res = await fetch(`/api/direktori/${formId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (activeTab === "Siswa") {
+          res = await fetch(`/api/absensi/students/${formId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: formName, kelas: formRole, photoUrl: formPhoto }) });
+        } else {
+          res = await fetch(`/api/direktori/${formId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        }
       }
       if (!res.ok) throw new Error();
       showToast("success", modalMode === "create" ? "Data ditambahkan" : "Data diperbarui", `${formName} berhasil disimpan.`);

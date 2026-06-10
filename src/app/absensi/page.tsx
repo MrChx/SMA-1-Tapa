@@ -20,6 +20,7 @@ export default function AbsensiPage() {
 
   const [regName, setRegName] = useState("");
   const [regKelas, setRegKelas] = useState("");
+  const [regPhoto, setRegPhoto] = useState<string | null>(null);
   const [kelasList, setKelasList] = useState<{ id: string; name: string }[]>([]);
   const [regStep, setRegStep] = useState(-1);
   const [regStatus, setRegStatus] = useState("");
@@ -156,9 +157,10 @@ export default function AbsensiPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: regName,
+            name: regName.toUpperCase(),
             kelas: regKelas,
             embeddings: regEmbeddingsRef.current,
+            photoUrl: regPhoto,
           }),
         });
         const data = await res.json();
@@ -394,7 +396,7 @@ export default function AbsensiPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-blue-600 ml-1">Nama Lengkap</label>
-                        <input value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-blue-50 border border-blue-100 focus:border-blue-300 focus:ring-2 focus:ring-blue-200 outline-none text-blue-950 font-medium" placeholder="Masukkan nama lengkap" />
+                        <input value={regName} onChange={(e) => setRegName(e.target.value.toUpperCase())} className="w-full px-6 py-4 rounded-2xl bg-blue-50 border border-blue-100 focus:border-blue-300 focus:ring-2 focus:ring-blue-200 outline-none text-blue-950 font-medium uppercase" placeholder="Masukkan nama lengkap" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-blue-600 ml-1">Kelas</label>
@@ -408,6 +410,32 @@ export default function AbsensiPage() {
                         {kelasList.length === 0 && <p className="text-xs text-amber-600 ml-1">Belum ada kelas tersedia. Hubungi admin untuk menambahkan kelas.</p>}
                       </div>
                     </div>
+                      {/* Avatar upload */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-blue-600 ml-1">Foto Profil (Opsional)</label>
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-20 h-20 rounded-2xl border-2 border-dashed border-blue-300 flex items-center justify-center bg-blue-50 overflow-hidden cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => document.getElementById('reg-photo-upload')?.click()}>
+                            {regPhoto ? (
+                              <><img src={regPhoto} alt="Foto" className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"><span className="material-symbols-outlined text-white text-sm">edit</span></div></>
+                            ) : (
+                              <span className="material-symbols-outlined text-blue-400 text-2xl">add_a_photo</span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-blue-600">Upload foto profil yang akan ditampilkan di direktori siswa.</p>
+                            {regPhoto && <button type="button" onClick={() => setRegPhoto(null)} className="text-xs text-red-500 font-bold mt-1 hover:underline">Hapus Foto</button>}
+                          </div>
+                        </div>
+                        <input type="file" id="reg-photo-upload" accept="image/*" className="hidden" onChange={async (e) => {
+                          if (!e.target.files?.[0]) return;
+                          const fd = new FormData(); fd.append('file', e.target.files[0]); fd.append('folder', 'siswa');
+                          try {
+                            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.url) setRegPhoto(data.url);
+                          } catch { /* ignore */ }
+                        }} />
+                      </div>
                     {regError && <p className="text-red-600 text-sm font-bold bg-red-50 px-4 py-2 rounded-xl">{regError}</p>}
                     <button onClick={startRegistration} disabled={!regName.trim() || !regKelas.trim()} className="w-full bg-blue-700 disabled:bg-blue-300 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 active:scale-[0.98] transition-all shadow-lg shadow-blue-700/20">
                       Lanjut Scan Wajah →

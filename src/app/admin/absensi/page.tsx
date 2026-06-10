@@ -6,7 +6,7 @@ import { useConfirm } from "@/components/ConfirmModal";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type Student = { id: string; name: string; kelas: string; createdAt: string };
+type Student = { id: string; name: string; kelas: string; photoUrl: string | null; createdAt: string };
 type Record = { id: string; date: string; time: string; status: string; student: { name: string; kelas: string } };
 type KelasItem = { id: string; name: string };
 
@@ -34,6 +34,7 @@ export default function AdminAbsensi() {
   // Kelas form
   const [newKelasName, setNewKelasName] = useState("");
   const [addingKelas, setAddingKelas] = useState(false);
+  const [studentKelasFilter, setStudentKelasFilter] = useState("");
 
   const fetchKelasList = useCallback(async () => {
     const res = await fetch("/api/absensi/kelas");
@@ -41,8 +42,14 @@ export default function AdminAbsensi() {
   }, []);
 
   const fetchStudents = useCallback(async () => {
-    const res = await fetch("/api/absensi/students");
-    setStudents(await res.json());
+    try {
+      const res = await fetch("/api/absensi/students");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setStudents(Array.isArray(data) ? data : []);
+    } catch {
+      setStudents([]);
+    }
   }, []);
 
   const fetchRecords = useCallback(async () => {
@@ -334,36 +341,52 @@ export default function AdminAbsensi() {
       {/* ═══ SISWA TAB ═══ */}
       {tab === "students" && (
         <section className="bg-white rounded-[2rem] shadow-sm border border-blue-100 overflow-hidden">
-          <div className="bg-blue-50/50 px-8 py-5 border-b border-blue-100 flex items-center gap-3">
-            <span className="material-symbols-outlined text-blue-700">groups</span>
-            <h2 className="text-lg font-extrabold text-blue-950">Siswa Terdaftar ({students.length})</h2>
+          <div className="bg-blue-50/50 px-8 py-5 border-b border-blue-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-blue-700">groups</span>
+              <h2 className="text-lg font-extrabold text-blue-950">Siswa Terdaftar ({students.length})</h2>
+            </div>
+            <div className="relative">
+              <select value={studentKelasFilter} onChange={(e) => setStudentKelasFilter(e.target.value)} className="px-4 py-2 pr-8 rounded-xl border border-blue-200 text-sm text-blue-900 outline-none focus:ring-2 focus:ring-blue-300 appearance-none bg-white cursor-pointer">
+                <option value="">Semua Kelas</option>
+                {kelasList.map((k) => <option key={k.id} value={k.name}>{k.name}</option>)}
+              </select>
+              <span className="material-symbols-outlined text-blue-400 text-sm absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+            </div>
           </div>
           <div className="p-6">
-            {students.length === 0 ? (
-              <div className="text-center py-12 text-blue-400">
-                <span className="material-symbols-outlined text-4xl mb-2 block opacity-40">person_off</span>
-                <p className="font-bold">Belum ada siswa yang terdaftar.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {students.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100 group hover:shadow-md transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-blue-600">person</span>
+            {(() => {
+              const filteredStudents = studentKelasFilter ? students.filter(s => s.kelas === studentKelasFilter) : students;
+              return filteredStudents.length === 0 ? (
+                <div className="text-center py-12 text-blue-400">
+                  <span className="material-symbols-outlined text-4xl mb-2 block opacity-40">person_off</span>
+                  <p className="font-bold">{studentKelasFilter ? `Belum ada siswa untuk kelas ${studentKelasFilter}.` : "Belum ada siswa yang terdaftar."}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredStudents.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100 group hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-200 bg-blue-100">
+                          {s.photoUrl ? (
+                            <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><span className="material-symbols-outlined text-blue-400">person</span></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-blue-950 uppercase">{s.name}</p>
+                          <p className="text-xs text-blue-600">Kelas {s.kelas}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-blue-950">{s.name}</p>
-                        <p className="text-xs text-blue-600">Kelas {s.kelas}</p>
-                      </div>
+                      <button onClick={() => handleDeleteStudent(s.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
+                        <span className="material-symbols-outlined">delete</span>
+                      </button>
                     </div>
-                    <button onClick={() => handleDeleteStudent(s.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100">
-                      <span className="material-symbols-outlined">delete</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </section>
       )}

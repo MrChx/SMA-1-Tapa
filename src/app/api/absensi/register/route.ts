@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, kelas, embeddings } = await req.json();
-    const normalizedName = typeof name === "string" ? name.trim() : "";
+    const { name, kelas, embeddings, photoUrl } = await req.json();
+    // Auto-capitalize the name
+    const normalizedName = typeof name === "string" ? name.trim().toUpperCase() : "";
     const normalizedKelas = typeof kelas === "string" ? kelas.trim() : "";
 
     if (!normalizedName || !normalizedKelas || !embeddings || !Array.isArray(embeddings) || embeddings.length !== 5) {
@@ -33,7 +34,12 @@ export async function POST(req: NextRequest) {
     }
 
     const student = await prisma.student.create({
-      data: { name: normalizedName, kelas: normalizedKelas, embeddings },
+      data: {
+        name: normalizedName,
+        kelas: normalizedKelas,
+        embeddings,
+        photoUrl: photoUrl || null,
+      },
     });
 
     return NextResponse.json({ success: true, id: student.id, name: student.name });

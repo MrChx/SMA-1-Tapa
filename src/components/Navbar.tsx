@@ -65,7 +65,7 @@ export default function Navbar() {
             </button>
             <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform">
               <Image src="/logo.png" alt="Logo SMA Negeri 1 Tapa" width={48} height={48} className="h-12 w-12 object-contain drop-shadow-md" />
-              <div className="hidden sm:block leading-tight">
+              <div className="leading-tight">
                 <div className="text-white font-extrabold text-lg tracking-tight">SMA N 1 Tapa</div>
                 <div className="text-blue-100 text-[10px] font-semibold tracking-widest uppercase">Bone Bolango</div>
               </div>
