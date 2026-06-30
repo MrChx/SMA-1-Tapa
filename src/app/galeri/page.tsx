@@ -57,6 +57,13 @@ export default async function Galeri() {
                   </span>
                   <h3 className="text-xl font-bold leading-tight text-blue-950">{item.title}</h3>
                   <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-blue-800">{item.summary}</p>
+                  <div className="mt-auto pt-5 flex items-center justify-between border-t border-blue-50 mt-5">
+                    <span className="text-[11px] text-blue-400 font-semibold">{new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    <Link href={`/galeri/${item.id}`} className="inline-flex items-center gap-1.5 text-blue-700 font-bold text-sm hover:text-blue-900 group/link transition-colors">
+                      Baca Selengkapnya
+                      <span className="material-symbols-outlined text-sm group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}

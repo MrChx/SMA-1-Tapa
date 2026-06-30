@@ -24,8 +24,8 @@ export default async function Profil() {
           <div className="relative z-10 px-6 md:px-12 max-w-2xl text-white">
             <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold tracking-widest uppercase mb-4 md:mb-6">SMA NEGERI 1 TAPA</span>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter mb-4 md:mb-6 leading-[1.1]">
-              <div className="opacity-80">{(cfg.hero_theme || "SMA Hebat - Maju Semua").split(" - ")[0]} -</div>
-              <div className="text-white">{(cfg.hero_theme || "SMA Hebat - Maju Semua").split(" - ")[1] || ""}</div>
+              <div className="opacity-80">{(cfg.hero_theme || "Maju Bersama  -  Hebat Semua").split(" - ")[0]} -</div>
+              <div className="text-white">{(cfg.hero_theme || "Maju Bersama  -  Hebat Semua").split(" - ")[1] || ""}</div>
             </h1>
             <p className="text-base md:text-lg opacity-90 leading-relaxed font-medium">{cfg.hero_desc || ""}</p>
           </div>

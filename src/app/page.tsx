@@ -40,10 +40,10 @@ export default async function Home() {
             <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100/80 backdrop-blur-sm text-blue-700 text-xs font-bold tracking-widest uppercase animate-[fadeInDown_0.6s_ease-out]">SMA Negeri 1 Tapa</span>
             <h1 className="text-4xl md:text-5xl lg:text-8xl font-black tracking-tighter leading-[1] drop-shadow-sm">
               <div className="text-blue-950">
-                {(cfg.hero_theme || "SMA Hebat - Maju Semua").split(" - ")[0]} -
+                {(cfg.hero_theme || "Maju Bersama  -  Hebat Semua").split(" - ")[0]} -
               </div>
               <div className="bg-gradient-to-r from-blue-700 to-blue-400 bg-clip-text text-transparent mt-1">
-                {(cfg.hero_theme || "SMA Hebat - Maju Semua").split(" - ")[1] || ""}
+                {(cfg.hero_theme || "Maju Bersama  -  Hebat Semua").split(" - ")[1] || ""}
               </div>
             </h1>
             <p className="text-base md:text-lg lg:text-xl text-blue-800 leading-relaxed max-w-2xl mx-auto font-medium opacity-90">
