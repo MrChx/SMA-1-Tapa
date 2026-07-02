@@ -210,6 +210,9 @@ export default function AbsensiPage() {
     setAbsMessage("Arahkan wajah Anda ke kamera...");
     busyRef.current = false;
 
+    const collectedEmbeddings: number[][] = [];
+    const REQUIRED_FRAMES = 3;
+
     intervalRef.current = setInterval(async () => {
       if (busyRef.current) return;
       busyRef.current = true;
@@ -217,6 +220,15 @@ export default function AbsensiPage() {
       const desc = await detectFace();
       if (!desc) { busyRef.current = false; return; }
 
+      collectedEmbeddings.push(Array.from(desc));
+      setAbsMessage(`Memindai wajah... (${collectedEmbeddings.length}/${REQUIRED_FRAMES})`);
+
+      if (collectedEmbeddings.length < REQUIRED_FRAMES) {
+        busyRef.current = false;
+        return;
+      }
+
+      // We have enough frames, stop scanning
       if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
       setAbsMessage("Wajah terdeteksi! Memproses absensi...");
 
@@ -239,7 +251,7 @@ export default function AbsensiPage() {
         const res = await fetch("/api/absensi/attend", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ embedding: Array.from(desc), lat: coords.lat, lng: coords.lng }),
+          body: JSON.stringify({ embeddings: collectedEmbeddings, lat: coords.lat, lng: coords.lng }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Server error");
@@ -253,7 +265,7 @@ export default function AbsensiPage() {
         setAbsMessage(e instanceof Error ? e.message : "Gagal memproses absensi.");
       }
       stopCamera();
-    }, 800);
+    }, 600);
   };
 
   const resetAttendance = () => {
